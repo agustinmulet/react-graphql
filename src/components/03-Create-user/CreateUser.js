@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Spinner,
@@ -6,69 +6,115 @@ import {
 } from "@chakra-ui/core";
 import Form from './Form';
 
-const wait = (cb) => (setTimeout(cb, 2000));
+import { useMutation, gql } from '@apollo/client';
+
+const ADD_USER = gql`
+  mutation addUser ($name: String!, $address: String!, $birthday: String!) {
+    addUser(name: $name, address: $address, birthday: $birthday)
+    {
+      id
+      name
+      address
+      birthday
+      posts {
+        id
+      }
+    }
+  }
+`;
 
 const CreateUser = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+
+    /**
+   * One way to update cache
+   *
+
+  const updateCache = (cache, {data}) => {
+    // Fetch the users from the cache
+    const existingUsers = cache.readQuery({
+      query: GET_USERS
+    });
+    // Add the new user to the cache
+    const newUser = data.insert_users_one;
+    cache.writeQuery({
+      query: GET_USERS,
+      data: {users: [newUser, ...existingUsers.users]}
+    });
+  };
+  */
+
+  /**
+   * Another way to update cache after a mutation, 
+   * from Apollo Docs
+   */
+
+  const updateCache = (cache, {data}) => {
+    //Modify cache directly with a graphql fragment
+    cache.modify({
+      fields: {
+        users(existingUsers = []) {
+          const newUser = cache.writeFragment({
+            data: data.addUser,
+            fragment: gql`
+              fragment NewUser on users {
+                id
+                name
+                address
+                birthday
+                posts {
+                  id
+                  title
+                  content
+                  comments
+                }
+              }
+            `
+          });
+          return [...existingUsers, newUser];
+        }
+      }
+    });
+  }
+
+  const [addNewUser, { loading, error }] = useMutation(ADD_USER, { update: updateCache });
 
   function handleSubmit(e) {
     e.preventDefault();
     if (
-      e.target.id.value &&
       e.target.name.value && 
       e.target.address.value &&
       e.target.birthday.value
     ) {
-      setIsLoading(true);
-      fetch(`${process.env.SERVER_URL}/users`,{
-        method: 'POST',
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        redirect: 'follow',
-        referrerPolicy: 'no-referrer',
-        body: JSON.stringify({
-          id: e.target.id.value,
-          name: e.target.name.value,
-          address: e.target.address.value,
-          birthday: e.target.birthday.value,
-          posts: []
-        })
-      })
-      .then(data => data.json())
-      .then(() => {
-        wait(() => {
-          toast({
-            position: "bottom-left",
-            title: "User created.",
-            description: "Thanks for using this super secure software.",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-          });
-          setIsLoading(false);
-        });
-      })
-      .catch(err => {
+      addNewUser({ variables: {
+        name: e.target.name.value,
+        address: e.target.address.value,
+        birthday: e.target.birthday.value
+      }});
+      if(!loading) {
         toast({
-          title: "An error occurred.",
-          description: "Unable to create user, check console.",
-          status: "error",
+          position: "bottom-left",
+          title: "User created.",
+          description: "Thanks for using this super secure software.",
+          status: "success",
           duration: 3000,
           isClosable: true,
         });
-        setIsLoading(false);
-        console.error(err);
-      });
+      }
       e.target.reset();
     } 
   }
 
-  if(isLoading) return <Spinner alignSelf="center" size="48px" />;
+  if(loading) return <Spinner alignSelf="center" size="48px" />;
+  if(error) {
+    toast({
+      title: "An error occurred.",
+      description: "Unable to create user, check console.",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+    })
+  }
 
   return (
     <Box alignSelf="center">
