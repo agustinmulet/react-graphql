@@ -1,0 +1,12 @@
+#Carpetas con dependencias
+node_modules/
+
+#Carpetas generadas por Parcel
+.cache/
+dist/
+
+#Variables de entorno
+.env
+
+#Carpeta con configuracions de VSCode
+.vscode/
