@@ -15,7 +15,7 @@ import DeleteUser from './04-Delete-user/DeleteUser';
 
 const App = () => {
   const { colorMode, toggleColorMode } = useColorMode();
-  console.log(process.env.PEPE)
+  
   return (
     <Router>
        <nav>
