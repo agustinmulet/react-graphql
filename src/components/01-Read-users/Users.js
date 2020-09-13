@@ -1,32 +1,39 @@
-import React, { useState, useEffect } from 'react'
-import { Box, Spinner } from '@chakra-ui/core';
+import React from 'react';
+import { Box, Heading, Spinner, Text } from '@chakra-ui/core';
 import UserItem from './UserItem';
 
-const wait = (cb) => (setTimeout(cb, 2000));
+import { gql, useQuery } from '@apollo/client';
+
+// We first define the query, we can test it before with the 
+// GraphQL playground if we have access or with the Apollo Extension
+// in the browser, for now we query everything but we refine it later
+const GET_USERS = gql`
+  query getUsers {
+    users {
+      id
+      name
+      address
+      birthday
+      posts {
+        id
+      }
+    }
+  }
+`
 
 const Users = () => {
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Using the useQuery hook that provides us with different status of
+  // our query, kind of like a state machine
+  const { loading, error, data } = useQuery(GET_USERS);
 
-  useEffect(() => {
-    fetch(`${process.env.SERVER_URL}/users`)
-      .then(data => data.json())
-      .then(data => {
-        wait(() => {
-          setUsers(data);
-          setIsLoading(false);
-        })
-      })
-      .catch(err => console.log(err));
-  }, []);
-
-  if(isLoading) return <Spinner alignSelf="center" size="48px" />;
-  if(!users) return <p>Sorry, no users :(</p>;
-
+  if(loading) return <Spinner alignSelf="center" size="48px" />;
+  if(error) return <Text alignSelf="center">There was an error fetching the users 😭</Text>;
+  if(!data.users.length) return <Heading alignSelf="center">Sorry, no users :(</Heading>;
+  
   return (
     <Box alignSelf="center">
       {
-        users.map(user => <UserItem key={user.id} user={user} />)
+        data.users.map(user => <UserItem key={user.id} user={user} />)
       }
     </Box>
   );

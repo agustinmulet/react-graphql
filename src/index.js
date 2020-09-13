@@ -3,14 +3,25 @@ import ReactDOM from 'react-dom';
 import App from './components/App';
 import { ThemeProvider, theme, CSSReset, ColorModeProvider } from '@chakra-ui/core'
 
+import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
+
+// Create a new Apollo Client instance with some config
+const client = new ApolloClient({
+  uri: `${process.env.SERVER_URI}`,
+  cache: new InMemoryCache()
+})
+
+// Wrap our app with the Apollo Provider, passing the client instance as prop
 function AppWrapped() {
   return (
-    <ThemeProvider theme={theme}>
-      <ColorModeProvider>
-        <CSSReset />
-        <App />
-      </ColorModeProvider>
-    </ThemeProvider>
+    <ApolloProvider client={client}>
+      <ThemeProvider theme={theme}>
+        <ColorModeProvider>
+          <CSSReset />
+          <App />
+        </ColorModeProvider>
+      </ThemeProvider>
+    </ApolloProvider>
   )
 }
 

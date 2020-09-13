@@ -1,5 +1,11 @@
 import React from 'react';
-import { useColorMode, Button, Icon, Heading, Flex } from '@chakra-ui/core';
+import {
+  Button,
+  Flex,
+  Heading,
+  Icon,
+  useColorMode
+} from '@chakra-ui/core';
 import {
   BrowserRouter as Router,
   Switch,
@@ -15,7 +21,7 @@ import DeleteUser from './04-Delete-user/DeleteUser';
 
 const App = () => {
   const { colorMode, toggleColorMode } = useColorMode();
-  
+
   return (
     <Router>
        <nav>
