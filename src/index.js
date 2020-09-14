@@ -8,7 +8,21 @@ import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
 // Create a new Apollo Client instance with some config
 const client = new ApolloClient({
   uri: `${process.env.SERVER_URI}`,
-  cache: new InMemoryCache()
+  // Defining a typePolicy to take the incoming data when merging
+  // to avoid possible data errors warned by Apollo
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          users: {
+            merge(existing, incoming) {
+              return incoming;
+            },
+          },
+        },
+      },
+    }
+  })
 })
 
 // Wrap our app with the Apollo Provider, passing the client instance as prop
